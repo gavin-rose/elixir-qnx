@@ -58,22 +58,34 @@ observer, et) are excluded from the cross build.
 
 ## Boot in QEMU
 
-Build a bootable QNX image (in the container), then boot it on the host:
+`make-image.sh` tars the OTP release, installs the image-customization snippets
+from `image/snippets/`, and builds a bootable QNX image with the release baked
+into the data partition. On first boot the release is unpacked and installed and
+a proof line is printed to the console.
 
 ```sh
-# build the image (ARCH defaults to x86_64 to match the OTP build)
+# build the image in the container (ARCH defaults to x86_64 to match the OTP build)
 docker compose run --rm toolchain bash scripts/make-image.sh
 
 # boot it on the host (user-mode networking, ssh forwarded to localhost:2222)
 ./scripts/run-qemu.sh
-
-# with the guest booted, deploy the OTP release and start the shell
-./scripts/deploy-otp.sh
 ```
+
+The serial console should show `QNX-ERLANG-PROOF arch=x86_64-unknown-nto-qnx
+os={unix,qnx}`, Erlang running on QNX.
 
 On Apple Silicon the x86_64 guest runs under TCG (slower); the aarch64le target
 runs under HVF near-native, and becomes the primary once an aarch64 OTP release
-is built (`ARCH=aarch64le` on all three scripts).
+is built (`ARCH=aarch64le`).
+
+### image/snippets
+
+Tracked `mkqnximage` customizations copied into the build's `local/snippets/`:
+
+- `data_files.custom` adds the OTP tarball to the data partition.
+- `post_start.custom` unpacks/installs it on first boot and prints the proof.
+- `profile.custom` puts `erl` on `PATH`.
+- `system_files.custom` adds `sshd-auth` (QNX's stock image omits it, breaking sshd).
 
 ## Roadmap
 

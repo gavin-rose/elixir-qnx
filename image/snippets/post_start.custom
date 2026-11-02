@@ -1,0 +1,14 @@
+# local/snippets/post_start.custom
+# Unpack and install the cross-compiled Erlang/OTP release on first boot, then
+# print a proof line showing erl runs on QNX.
+if [ ! -e /data/opt/otp/.ready ]; then
+    echo "QNX-OTP: unpacking Erlang/OTP release"
+    mkdir -p /data/opt/otp
+    cd /data/opt/otp
+    tar xzf /data/opt.tgz
+    ./Install -minimal /data/opt/otp
+    touch /data/opt/otp/.ready
+fi
+echo "QNX-OTP: starting erl"
+/data/opt/otp/bin/erl -noshell -eval 'io:format("QNX-ERLANG-PROOF arch=~s os=~p version=~s~n",[erlang:system_info(system_architecture),os:type(),erlang:system_info(version)]), erlang:halt()'
+echo "QNX-OTP: erl exited"

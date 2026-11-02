@@ -1,0 +1,4 @@
+# local/snippets/data_files.custom
+# Erlang/OTP release tarball, unpacked on first boot by post_start.custom.
+# make-image.sh builds local/otp-qnx.tgz from the cross-compiled release.
+[perms=644] opt.tgz=local/otp-qnx.tgz

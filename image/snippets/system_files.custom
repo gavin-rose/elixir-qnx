@@ -1,0 +1,7 @@
+# local/snippets/system_files.custom
+# QNX's stock QEMU image ships sshd and sshd-session but omits sshd-auth, which
+# sshd-session re-execs at authentication time, so sshd dies on first connect.
+# Add sshd-auth both next to sshd-session (/system/bin) and at its compiled-in
+# path (/usr/libexec); OpenSSH 9.8+ checks its own directory first.
+[perms=555] bin/sshd-auth=usr/libexec/sshd-auth
+[perms=555] usr/libexec/sshd-auth=usr/libexec/sshd-auth

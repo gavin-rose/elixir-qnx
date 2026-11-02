@@ -1,29 +1,37 @@
 #!/usr/bin/env bash
-# Build a bootable QNX 8.0 image for QEMU. Runs inside the toolchain container:
-#   docker run --rm --platform linux/amd64 -v "$PWD":/work -w /work \
-#     elixir-qnx-toolchain bash scripts/make-image.sh
+# Build a bootable QNX 8.0 image for QEMU with the cross-compiled OTP release
+# baked into the data partition. Runs inside the toolchain container:
+#   docker compose run --rm toolchain bash scripts/make-image.sh
 #
-# Output lands in ./targets/<arch>/output (bind-mounted to the host for QEMU).
 # Default arch is x86_64 to match the OTP build; switch to aarch64le once an
-# aarch64 OTP release exists (that is the faster, HVF-accelerated target).
+# aarch64 OTP release exists (the faster, HVF-accelerated target).
 set -euo pipefail
 
 ARCH="${ARCH:-x86_64}"
 HOST="${HOST:-qnx-$ARCH}"
 USERS="${USERS:-qnxuser/qnx}"
 RAM="${RAM:-2048}"
-TARGET_DIR="${TARGET_DIR:-/work/targets/$ARCH}"
+WORK="${WORK:-/work}"
+REL="${REL:-$WORK/otp-qnx}"
+TARGET_DIR="${TARGET_DIR:-$WORK/targets/$ARCH}"
+SNIPPETS_SRC="${SNIPPETS_SRC:-$WORK/image/snippets}"
+
+[ -d "$REL" ] || { echo "no OTP release at $REL; run build-otp.sh first" >&2; exit 1; }
 
 # shellcheck disable=SC1091
 source "${QNX_BASE}/qnxsdp-env.sh"
 
-mkdir -p "$TARGET_DIR"
-cd "$TARGET_DIR"
+mkdir -p "$TARGET_DIR/local/snippets"
 
-# A login user lets us reach the guest over the SSH port-forward that
-# run-qemu.sh sets up; the guest generates its sshd host key on first boot (the
-# container has no ssh-keygen for --sshd-pregen). --ip=dhcp takes an address
-# from QEMU's user-mode network.
+# Bake the OTP release in as a tarball, unpacked on first boot by
+# post_start.custom. Built here with Linux tar, so no macOS resource forks.
+tar -C "$REL" -czf "$TARGET_DIR/local/otp-qnx.tgz" .
+
+# Install the tracked image-customization snippets (OTP bake-in, sshd-auth fix,
+# PATH). mkqnximage uses local/snippets/*.custom when present.
+cp "$SNIPPETS_SRC"/*.custom "$TARGET_DIR/local/snippets/"
+
+cd "$TARGET_DIR"
 mkqnximage \
   --type=qemu \
   --arch="$ARCH" \
@@ -39,4 +47,3 @@ mkqnximage \
   --build
 
 echo "Image built in: $TARGET_DIR/output"
-ls -la "$TARGET_DIR/output" 2>/dev/null || true
