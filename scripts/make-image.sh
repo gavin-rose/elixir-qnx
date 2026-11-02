@@ -20,15 +20,16 @@ source "${QNX_BASE}/qnxsdp-env.sh"
 mkdir -p "$TARGET_DIR"
 cd "$TARGET_DIR"
 
-# A pre-generated sshd host key and a login user let us reach the guest over the
-# SSH port-forward that run-qemu.sh sets up. --ip=dhcp takes an address from
-# QEMU's user-mode network.
+# A login user lets us reach the guest over the SSH port-forward that
+# run-qemu.sh sets up; the guest generates its sshd host key on first boot (the
+# container has no ssh-keygen for --sshd-pregen). --ip=dhcp takes an address
+# from QEMU's user-mode network.
 mkqnximage \
   --type=qemu \
   --arch="$ARCH" \
   --hostname="$HOST" \
   --users="$USERS" \
-  --sshd-pregen=yes \
+  --ssh-ident=none \
   --ip=dhcp \
   --ram="$RAM" \
   --force \
