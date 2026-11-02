@@ -13,10 +13,12 @@ USERS="${USERS:-qnxuser/qnx}"
 RAM="${RAM:-2048}"
 WORK="${WORK:-/work}"
 REL="${REL:-$WORK/otp-qnx}"
+ELIXIR="${ELIXIR:-$WORK/elixir}"
 TARGET_DIR="${TARGET_DIR:-$WORK/targets/$ARCH}"
 SNIPPETS_SRC="${SNIPPETS_SRC:-$WORK/image/snippets}"
 
 [ -d "$REL" ] || { echo "no OTP release at $REL; run build-otp.sh first" >&2; exit 1; }
+[ -d "$ELIXIR" ] || { echo "no Elixir at $ELIXIR; run fetch-elixir.sh first" >&2; exit 1; }
 
 # shellcheck disable=SC1091
 source "${QNX_BASE}/qnxsdp-env.sh"
@@ -26,6 +28,9 @@ mkdir -p "$TARGET_DIR/local/snippets"
 # Bake the OTP release in as a tarball, unpacked on first boot by
 # post_start.custom. Built here with Linux tar, so no macOS resource forks.
 tar -C "$REL" -czf "$TARGET_DIR/local/otp-qnx.tgz" .
+
+# Precompiled Elixir (portable BEAM bytecode), unpacked next to the OTP release.
+tar -C "$ELIXIR" -czf "$TARGET_DIR/local/elixir.tgz" .
 
 # Install the tracked image-customization snippets (OTP bake-in, sshd-auth fix,
 # PATH). mkqnximage uses local/snippets/*.custom when present.

@@ -1,14 +1,23 @@
 # local/snippets/post_start.custom
-# Unpack and install the cross-compiled Erlang/OTP release on first boot, then
-# print a proof line showing erl runs on QNX.
+# Unpack the cross-compiled Erlang/OTP release and the precompiled Elixir on
+# first boot, then print proof lines showing both run on QNX.
 if [ ! -e /data/opt/otp/.ready ]; then
     echo "QNX-OTP: unpacking Erlang/OTP release"
     mkdir -p /data/opt/otp
-    cd /data/opt/otp
-    tar xzf /data/opt.tgz
-    ./Install -minimal /data/opt/otp
+    (cd /data/opt/otp && tar xzf /data/opt.tgz && ./Install -minimal /data/opt/otp)
     touch /data/opt/otp/.ready
 fi
+if [ ! -e /data/opt/elixir/.ready ]; then
+    echo "QNX-OTP: unpacking Elixir"
+    mkdir -p /data/opt/elixir
+    (cd /data/opt/elixir && tar xzf /data/elixir.tgz)
+    touch /data/opt/elixir/.ready
+fi
+
+export PATH=/data/opt/otp/bin:/data/opt/elixir/bin:$PATH
+
 echo "QNX-OTP: starting erl"
-/data/opt/otp/bin/erl -noshell -eval 'io:format("QNX-ERLANG-PROOF arch=~s os=~p version=~s~n",[erlang:system_info(system_architecture),os:type(),erlang:system_info(version)]), erlang:halt()'
-echo "QNX-OTP: erl exited"
+erl -noshell -eval 'io:format("QNX-ERLANG-PROOF arch=~s os=~p version=~s~n",[erlang:system_info(system_architecture),os:type(),erlang:system_info(version)]), erlang:halt()'
+echo "QNX-ELIXIR: starting elixir"
+elixir -e 'IO.puts("QNX-ELIXIR-PROOF elixir=#{System.version()} otp=#{System.otp_release()} arch=#{List.to_string(:erlang.system_info(:system_architecture))}")'
+echo "QNX-DONE"

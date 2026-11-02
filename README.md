@@ -58,12 +58,15 @@ observer, et) are excluded from the cross build.
 
 ## Boot in QEMU
 
-`make-image.sh` tars the OTP release, installs the image-customization snippets
-from `image/snippets/`, and builds a bootable QNX image with the release baked
-into the data partition. On first boot the release is unpacked and installed and
-a proof line is printed to the console.
+`make-image.sh` tars the OTP release and the precompiled Elixir, installs the
+image-customization snippets from `image/snippets/`, and builds a bootable QNX
+image with both baked into the data partition. On first boot they are unpacked
+and installed and proof lines are printed to the console.
 
 ```sh
+# fetch the precompiled Elixir (once); ./otp-qnx comes from build-otp.sh
+./scripts/fetch-elixir.sh
+
 # build the image in the container (ARCH defaults to x86_64 to match the OTP build)
 docker compose run --rm toolchain bash scripts/make-image.sh
 
@@ -71,8 +74,15 @@ docker compose run --rm toolchain bash scripts/make-image.sh
 ./scripts/run-qemu.sh
 ```
 
-The serial console should show `QNX-ERLANG-PROOF arch=x86_64-unknown-nto-qnx
-os={unix,qnx}`, Erlang running on QNX.
+The serial console should show, from inside QNX:
+
+```
+QNX-ERLANG-PROOF arch=x86_64-unknown-nto-qnx os={unix,qnx} version=16.4.0.7
+QNX-ELIXIR-PROOF elixir=1.20.5 otp=28 arch=x86_64-unknown-nto-qnx
+```
+
+You can also `ssh -p 2222 qnxuser@localhost` (password `qnx`) into the running
+guest; `erl`, `iex`, and `elixir` are on the path.
 
 On Apple Silicon the x86_64 guest runs under TCG (slower); the aarch64le target
 runs under HVF near-native, and becomes the primary once an aarch64 OTP release
@@ -82,9 +92,9 @@ is built (`ARCH=aarch64le`).
 
 Tracked `mkqnximage` customizations copied into the build's `local/snippets/`:
 
-- `data_files.custom` adds the OTP tarball to the data partition.
-- `post_start.custom` unpacks/installs it on first boot and prints the proof.
-- `profile.custom` puts `erl` on `PATH`.
+- `data_files.custom` adds the OTP and Elixir tarballs to the data partition.
+- `post_start.custom` unpacks/installs them on first boot and prints the proofs.
+- `profile.custom` puts `erl`, `iex`, and `elixir` on `PATH`.
 - `system_files.custom` adds `sshd-auth` (QNX's stock image omits it, breaking sshd).
 
 ## Roadmap
