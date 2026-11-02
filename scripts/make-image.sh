@@ -32,6 +32,8 @@ mkqnximage \
   --ssh-ident=none \
   --ip=dhcp \
   --ram="$RAM" \
+  --data-size="${DATA_SIZE:-768}" \
+  --data-inodes="${DATA_INODES:-40000}" \
   --force \
   --noprompt \
   --build
