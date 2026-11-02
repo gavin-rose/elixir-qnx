@@ -1,0 +1,25 @@
+services:
+  toolchain:
+    build:
+      context: .
+      secrets:
+        - myqnx_user
+        - myqnx_password
+        - license_key
+    image: elixir-qnx-toolchain
+    platform: linux/amd64
+    working_dir: /work
+    tty: true
+    stdin_open: true
+    volumes:
+      # Repo root is the work dir so OTP sources and build outputs persist on the
+      # host (and are gitignored). Scripts are edited on the host and run here.
+      - .:/work
+
+secrets:
+  myqnx_user:
+    environment: MYQNX_USER
+  myqnx_password:
+    environment: MYQNX_PASSWORD
+  license_key:
+    environment: LICENSE_KEY

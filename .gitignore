@@ -1,0 +1,14 @@
+# QNX installer and anything secret
+vendor/*.run
+
+# Build outputs
+/otp/
+/otp-qnx/
+_build/
+deps/
+output/
+*.img
+*.qcow2
+*.vmdk
+
+.DS_Store
