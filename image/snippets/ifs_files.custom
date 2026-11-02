@@ -1,0 +1,7 @@
+# local/snippets/ifs_files.custom
+# sshd-session re-execs the compiled-in absolute path /usr/libexec/sshd-auth,
+# which QNX's relocation of the helpers into /system/bin does not cover (unlike
+# SshdSessionPath and the sftp Subsystem, there is no config knob for it).
+# Symlink the compiled path, in the root IFS, to the real binary. The leading
+# slash roots it at / rather than under /proc/boot.
+[type=link] /usr/libexec/sshd-auth=/system/bin/sshd-auth
