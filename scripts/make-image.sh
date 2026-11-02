@@ -32,6 +32,7 @@ mkqnximage \
   --ip=dhcp \
   --ram="$RAM" \
   --force \
+  --noprompt \
   --build
 
 echo "Image built in: $TARGET_DIR/output"
