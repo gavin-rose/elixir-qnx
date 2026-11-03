@@ -12,6 +12,6 @@ defmodule Webdemo.Router do
 
   scope "/" do
     pipe_through :browser
-    live "/", Webdemo.CounterLive
+    live "/", Webdemo.ConsoleLive
   end
 end

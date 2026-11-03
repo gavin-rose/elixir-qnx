@@ -43,6 +43,9 @@ mkdir -p "$TARGET_DIR/local/webdemo-stage"
 # which would dangle on the guest and 404 the client JS (phoenix.js etc.).
 cp -RL "$WEBDEMO_LIB" "$TARGET_DIR/local/webdemo-stage/lib"
 cp "$WORK/webdemo/start.sh" "$TARGET_DIR/local/webdemo-stage/start.sh"
+# Cross-compile the native QNX analyzer (the real-time sampling loop) and stage
+# it with the app; the BEAM launches it via `on -p` at a real-time priority.
+qcc -Vgcc_ntox86_64 -O2 -o "$TARGET_DIR/local/webdemo-stage/analyzer" "$WORK/analyzer/analyzer.c" -lm
 tar -C "$TARGET_DIR/local/webdemo-stage" -czf "$TARGET_DIR/local/webdemo.tgz" .
 
 # Install the tracked image-customization snippets (OTP bake-in, sshd-auth fix,

@@ -46,7 +46,18 @@ defmodule Webdemo.Layouts do
             margin-right:8px;animation:pulse 1s infinite}
           @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
           pre{background:#000;border:1px solid var(--line);border-radius:8px;padding:14px;
-            overflow:auto;max-height:360px;color:#d7d7d7;font-size:12.5px;line-height:1.45;margin:0}
+            overflow:auto;max-height:360px;color:#d7d7d7;font-size:12.5px;line-height:1.45;margin:0;white-space:pre-wrap}
+          .statusrow{display:flex;align-items:center;margin-bottom:18px}
+          .light{width:12px;height:12px;border-radius:50%;margin-right:10px;background:#555}
+          .light.ok{background:#3ad16a;box-shadow:0 0 8px #3ad16a}
+          .light.alarm{background:var(--red);box-shadow:0 0 8px var(--red);animation:pulse 1s infinite}
+          .light.down{background:#999;animation:pulse .6s infinite}
+          .statustext{text-transform:uppercase;letter-spacing:.14em;font-size:12px;color:var(--mut)}
+          .readings{display:flex;gap:40px;margin-bottom:16px;flex-wrap:wrap}
+          .reading .rv{font-size:34px;font-weight:700;color:var(--txt);line-height:1.1}
+          .reading .rv .u{font-size:14px;color:var(--mut);margin-left:3px}
+          .reading .rl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+          .spark{width:100%;height:120px;display:block;background:#000;border:1px solid var(--line);border-radius:8px}
         </style>
       </head>
       <body>

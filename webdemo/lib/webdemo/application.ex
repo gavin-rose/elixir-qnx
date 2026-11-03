@@ -20,6 +20,7 @@ defmodule Webdemo.Application do
 
     children = [
       {Phoenix.PubSub, name: Webdemo.PubSub},
+      Webdemo.Analyzer,
       Webdemo.Endpoint
     ]
 

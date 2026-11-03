@@ -84,17 +84,32 @@ QNX-ELIXIR-PROOF elixir=1.20.5 otp=28 arch=x86_64-unknown-nto-qnx
 You can also `ssh -p 2222 qnxuser@localhost` (password `qnx`) into the running
 guest; `erl`, `iex`, and `elixir` are on the path.
 
-### Web demo
+### Lab operations console
 
-`webdemo/` is a minimal **Phoenix LiveView** app (Bandit adapter, pure-Elixir
-deps, no NIFs, no asset pipeline: the client JS is served straight from the
-Phoenix and LiveView deps). Compile it on the host first (`cd webdemo && mix
-compile`); `make-image.sh` bakes its host-compiled beams into the image and
-`post_start.custom` starts it on boot. The guest's port 4000 is forwarded, so
-once it is up, open `http://localhost:4000`: the page is served by the BEAM on
-QNX, a counter ticks every second pushed over the LiveView websocket, and the
-button round-trips a `phx-click` event to QNX and back. It reports the guest's
-`system_architecture`, `os:type`, OTP and Elixir versions.
+`webdemo/` is a Phoenix LiveView **operations console** for a simulated lab
+analyzer. It is the demo of the honest architecture: QNX runs the real-time
+workload, OTP supervises it, Phoenix operates it. Nothing hard-real-time is
+faked in Elixir.
+
+- `analyzer/analyzer.c` is the analyzer: a native QNX program (cross-compiled by
+  `make-image.sh`) whose sampling loop is scheduled by QNX at a real-time
+  priority (launched via `on -p`). It is the real-time task; the BEAM does not
+  run it.
+- `Webdemo.Analyzer` opens a port to it, parses its telemetry, and republishes
+  it on PubSub. It is supervised: when the native process dies, OTP restarts it.
+- `Webdemo.ConsoleLive` is the remote console (live telemetry, sparkline,
+  status, event log); `Webdemo.FaultLab` injects/clears faults and pushes
+  calibration by writing the control files the analyzer reads each tick.
+
+Compile the app on the host (`cd webdemo && mix compile`), build and boot the
+image, then open `http://localhost:4000`:
+
+- Live telemetry streams over the LiveView websocket (reading, temperature,
+  pressure, with a sparkline).
+- The fault lab injects **overheat** / **stuck** (watch the alarm and readings),
+  or **crashes** the analyzer, after which OTP restarts the native process and
+  telemetry resumes with no operator action.
+- Calibration updates apply live, with no restart.
 
 On Apple Silicon the x86_64 guest runs under TCG (slower); the aarch64le target
 runs under HVF near-native, and becomes the primary once an aarch64 OTP release
