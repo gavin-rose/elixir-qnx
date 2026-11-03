@@ -9,6 +9,8 @@ defmodule Webdemo.CounterLive do
     "uname" => {"uname", ["-a"]}
   }
 
+  @prios [15, 30, 63]
+
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket), do: :timer.send_interval(1000, self(), :tick)
@@ -20,6 +22,7 @@ defmodule Webdemo.CounterLive do
         os: inspect(:os.type()),
         otp: List.to_string(:erlang.system_info(:otp_release)),
         elixir: System.version(),
+        prios: @prios,
         diag_cmd: "sysinfo",
         diag: run_cmd("sysinfo")
       )
@@ -28,7 +31,16 @@ defmodule Webdemo.CounterLive do
   end
 
   @impl true
-  def handle_info(:tick, socket), do: {:noreply, update(socket, :count, &(&1 + 1))}
+  def handle_info(:tick, socket) do
+    socket = update(socket, :count, &(&1 + 1))
+    # When viewing the thread table, refresh it each second: a live monitor.
+    socket =
+      if socket.assigns.diag_cmd == "procs",
+        do: assign(socket, diag: run_cmd("procs")),
+        else: socket
+
+    {:noreply, socket}
+  end
 
   @impl true
   def handle_event("inc", _params, socket), do: {:noreply, update(socket, :count, &(&1 + 1))}
@@ -37,8 +49,20 @@ defmodule Webdemo.CounterLive do
     {:noreply, assign(socket, diag_cmd: cmd, diag: run_cmd(cmd))}
   end
 
-  # Shell out to a native QNX tool and return its output, failing soft so a
-  # missing tool (e.g. when running on the dev host) does not crash the view.
+  # Launch a task at a chosen QNX real-time priority, detached so System.cmd does
+  # not block, then switch to the live thread table to watch it appear.
+  def handle_event("spawn", %{"prio" => p}, socket) do
+    case Integer.parse(p) do
+      {prio, ""} when prio in @prios ->
+        System.cmd("sh", ["-c", "on -p #{prio} sleep 60 </dev/null >/dev/null 2>&1 &"])
+
+      _ ->
+        :noop
+    end
+
+    {:noreply, assign(socket, diag_cmd: "procs", diag: run_cmd("procs"))}
+  end
+
   defp run_cmd(key) do
     case Map.fetch(@cmds, key) do
       {:ok, {exe, args}} ->
@@ -73,12 +97,17 @@ defmodule Webdemo.CounterLive do
         <tr><td class="k">elixir</td><td class="v"><%= @elixir %></td></tr>
       </table>
 
-      <h2 style="font-size:15px;margin-top:24px">Native QNX diagnostics, called from Elixir via System.cmd</h2>
+      <h2 style="font-size:15px;margin-top:24px">QNX real-time scheduler, driven from Elixir</h2>
       <p>
         <button phx-click="diag" phx-value-cmd="sysinfo">pidin info</button>
-        <button phx-click="diag" phx-value-cmd="procs">threads &amp; priorities</button>
-        <button phx-click="diag" phx-value-cmd="uname">uname -a</button>
+        <button phx-click="diag" phx-value-cmd="procs">live threads</button>
+        <button phx-click="diag" phx-value-cmd="uname">uname</button>
       </p>
+      <p>
+        spawn a real-time task:
+        <button :for={p <- @prios} phx-click="spawn" phx-value-prio={p}>priority <%= p %></button>
+      </p>
+      <p :if={@diag_cmd == "procs"} style="color:#7ee081">● live, refreshing each second over the websocket</p>
       <pre style="background:#0b0d12;border:1px solid #262b33;border-radius:8px;padding:12px;overflow:auto;max-height:360px;color:#cfe3c0"><%= @diag %></pre>
     </div>
     """
