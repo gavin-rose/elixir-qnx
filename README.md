@@ -86,12 +86,15 @@ guest; `erl`, `iex`, and `elixir` are on the path.
 
 ### Web demo
 
-`webdemo/` is a minimal Bandit + Plug app (pure-Elixir deps, no NIFs). Compile it
-on the host first (`cd webdemo && mix compile`); `make-image.sh` bakes its
-host-compiled beams into the image and `post_start.custom` starts it on boot. The
-guest's port 4000 is forwarded, so once it is up, open `http://localhost:4000`:
-the page is served by the BEAM on QNX and reports the guest's
-`system_architecture`, `os:type`, and more.
+`webdemo/` is a minimal **Phoenix LiveView** app (Bandit adapter, pure-Elixir
+deps, no NIFs, no asset pipeline: the client JS is served straight from the
+Phoenix and LiveView deps). Compile it on the host first (`cd webdemo && mix
+compile`); `make-image.sh` bakes its host-compiled beams into the image and
+`post_start.custom` starts it on boot. The guest's port 4000 is forwarded, so
+once it is up, open `http://localhost:4000`: the page is served by the BEAM on
+QNX, a counter ticks every second pushed over the LiveView websocket, and the
+button round-trips a `phx-click` event to QNX and back. It reports the guest's
+`system_architecture`, `os:type`, OTP and Elixir versions.
 
 On Apple Silicon the x86_64 guest runs under TCG (slower); the aarch64le target
 runs under HVF near-native, and becomes the primary once an aarch64 OTP release

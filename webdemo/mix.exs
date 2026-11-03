@@ -20,8 +20,10 @@ defmodule Webdemo.MixProject do
   # Pure-Elixir/Erlang deps only, so nothing needs a NIF or cross-compile.
   defp deps do
     [
+      {:phoenix, "~> 1.7"},
+      {:phoenix_live_view, "~> 1.0"},
       {:bandit, "~> 1.5"},
-      {:plug, "~> 1.16"}
+      {:jason, "~> 1.4"}
     ]
   end
 end

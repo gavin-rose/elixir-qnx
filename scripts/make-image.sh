@@ -39,7 +39,9 @@ tar -C "$ELIXIR" -czf "$TARGET_DIR/local/elixir.tgz" .
 # the start script, run on the guest beam.
 rm -rf "$TARGET_DIR/local/webdemo-stage"
 mkdir -p "$TARGET_DIR/local/webdemo-stage"
-cp -R "$WEBDEMO_LIB" "$TARGET_DIR/local/webdemo-stage/lib"
+# -L dereferences symlinks: mix symlinks each app's priv/ to deps/<app>/priv,
+# which would dangle on the guest and 404 the client JS (phoenix.js etc.).
+cp -RL "$WEBDEMO_LIB" "$TARGET_DIR/local/webdemo-stage/lib"
 cp "$WORK/webdemo/start.sh" "$TARGET_DIR/local/webdemo-stage/start.sh"
 tar -C "$TARGET_DIR/local/webdemo-stage" -czf "$TARGET_DIR/local/webdemo.tgz" .
 
