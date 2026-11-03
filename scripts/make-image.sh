@@ -17,8 +17,11 @@ ELIXIR="${ELIXIR:-$WORK/elixir}"
 TARGET_DIR="${TARGET_DIR:-$WORK/targets/$ARCH}"
 SNIPPETS_SRC="${SNIPPETS_SRC:-$WORK/image/snippets}"
 
+WEBDEMO_LIB="$WORK/webdemo/_build/dev/lib"
+
 [ -d "$REL" ] || { echo "no OTP release at $REL; run build-otp.sh first" >&2; exit 1; }
 [ -d "$ELIXIR" ] || { echo "no Elixir at $ELIXIR; run fetch-elixir.sh first" >&2; exit 1; }
+[ -d "$WEBDEMO_LIB" ] || { echo "no compiled webdemo; run 'mix compile' in webdemo/ first" >&2; exit 1; }
 
 # shellcheck disable=SC1091
 source "${QNX_BASE}/qnxsdp-env.sh"
@@ -31,6 +34,14 @@ tar -C "$REL" -czf "$TARGET_DIR/local/otp-qnx.tgz" .
 
 # Precompiled Elixir (portable BEAM bytecode), unpacked next to the OTP release.
 tar -C "$ELIXIR" -czf "$TARGET_DIR/local/elixir.tgz" .
+
+# The host-compiled web demo (Bandit + Plug): portable app and dep beams, plus
+# the start script, run on the guest beam.
+rm -rf "$TARGET_DIR/local/webdemo-stage"
+mkdir -p "$TARGET_DIR/local/webdemo-stage"
+cp -R "$WEBDEMO_LIB" "$TARGET_DIR/local/webdemo-stage/lib"
+cp "$WORK/webdemo/start.sh" "$TARGET_DIR/local/webdemo-stage/start.sh"
+tar -C "$TARGET_DIR/local/webdemo-stage" -czf "$TARGET_DIR/local/webdemo.tgz" .
 
 # Install the tracked image-customization snippets (OTP bake-in, sshd-auth fix,
 # PATH). mkqnximage uses local/snippets/*.custom when present.

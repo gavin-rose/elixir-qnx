@@ -13,6 +13,12 @@ if [ ! -e /data/opt/elixir/.ready ]; then
     (cd /data/opt/elixir && tar xzf /data/elixir.tgz)
     touch /data/opt/elixir/.ready
 fi
+if [ ! -e /data/opt/webdemo/.ready ]; then
+    echo "QNX-OTP: unpacking webdemo"
+    mkdir -p /data/opt/webdemo
+    (cd /data/opt/webdemo && tar xzf /data/webdemo.tgz)
+    touch /data/opt/webdemo/.ready
+fi
 
 export PATH=/data/opt/otp/bin:/data/opt/elixir/bin:$PATH
 
@@ -20,4 +26,6 @@ echo "QNX-OTP: starting erl"
 erl -noshell -eval 'io:format("QNX-ERLANG-PROOF arch=~s os=~p version=~s~n",[erlang:system_info(system_architecture),os:type(),erlang:system_info(version)]), erlang:halt()'
 echo "QNX-ELIXIR: starting elixir"
 elixir -e 'IO.puts("QNX-ELIXIR-PROOF elixir=#{System.version()} otp=#{System.otp_release()} arch=#{List.to_string(:erlang.system_info(:system_architecture))}")'
+echo "QNX-WEB: starting Bandit on :4000"
+(/bin/sh /data/opt/webdemo/start.sh </dev/null >/data/var/webdemo.log 2>&1 &)
 echo "QNX-DONE"

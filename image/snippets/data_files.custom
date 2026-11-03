@@ -3,3 +3,4 @@
 # make-image.sh builds the tarballs from the release and the Elixir dir.
 [perms=644] opt.tgz=local/otp-qnx.tgz
 [perms=644] elixir.tgz=local/elixir.tgz
+[perms=644] webdemo.tgz=local/webdemo.tgz

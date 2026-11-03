@@ -84,6 +84,15 @@ QNX-ELIXIR-PROOF elixir=1.20.5 otp=28 arch=x86_64-unknown-nto-qnx
 You can also `ssh -p 2222 qnxuser@localhost` (password `qnx`) into the running
 guest; `erl`, `iex`, and `elixir` are on the path.
 
+### Web demo
+
+`webdemo/` is a minimal Bandit + Plug app (pure-Elixir deps, no NIFs). Compile it
+on the host first (`cd webdemo && mix compile`); `make-image.sh` bakes its
+host-compiled beams into the image and `post_start.custom` starts it on boot. The
+guest's port 4000 is forwarded, so once it is up, open `http://localhost:4000`:
+the page is served by the BEAM on QNX and reports the guest's
+`system_architecture`, `os:type`, and more.
+
 On Apple Silicon the x86_64 guest runs under TCG (slower); the aarch64le target
 runs under HVF near-native, and becomes the primary once an aarch64 OTP release
 is built (`ARCH=aarch64le`).
