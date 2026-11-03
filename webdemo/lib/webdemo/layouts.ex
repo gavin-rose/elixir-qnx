@@ -29,11 +29,12 @@ defmodule Webdemo.Layouts do
           .count{font-size:54px;font-weight:700;color:var(--red);line-height:1;margin:0}
           .count-label{color:var(--mut);font-size:12px;margin:4px 0 16px}
           button{font:inherit;font-size:13px;background:transparent;color:var(--txt);
-            border:1px solid var(--red);border-radius:7px;padding:6px 13px;cursor:pointer;
-            transition:background .12s,color .12s;margin:0 7px 7px 0}
-          button:hover{background:var(--red);color:#fff}
-          button.primary{background:var(--red);color:#fff}
-          button.primary:hover{background:var(--red2)}
+            border:1px solid #39343a;border-radius:7px;padding:7px 14px;cursor:pointer;
+            transition:background .12s,color .12s,border-color .12s}
+          button:hover{border-color:var(--red);color:#fff}
+          button:focus{outline:none}
+          button:focus-visible{outline:2px solid var(--red2);outline-offset:1px}
+          button.active{background:var(--red);border-color:var(--red);color:#fff}
           table.kv{border-collapse:collapse;width:100%;font-size:13px;margin-top:4px}
           table.kv td{padding:5px 0;border-bottom:1px solid var(--line)}
           table.kv tr:last-child td{border-bottom:0}
@@ -59,12 +60,14 @@ defmodule Webdemo.Layouts do
           .reading .rl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
           .spark{width:100%;height:120px;display:block;background:#000;border:1px solid var(--line);border-radius:8px}
           .pidtag{margin-left:auto;color:var(--mut);font-size:11px;letter-spacing:.06em}
-          .controls{display:flex;flex-wrap:wrap;gap:28px}
-          .cgroup{display:flex;flex-direction:column;align-items:flex-start}
-          .cgroup .clabel{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:9px}
-          .cgroup button{margin:0 7px 0 0}
-          button.danger{border-color:var(--red);color:var(--red2)}
-          button.danger:hover{background:var(--red);color:#fff}
+          .ctrl{display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--line)}
+          .ctrl:first-child{padding-top:0}
+          .ctrl:last-child{border-bottom:0;padding-bottom:0}
+          .ctrl .clabel{flex:0 0 150px;font-size:11px;letter-spacing:.14em;
+            text-transform:uppercase;color:var(--mut)}
+          .ctrl .btns{display:flex;flex-wrap:wrap;gap:8px}
+          button.danger{border-color:#5a2420;color:var(--red2)}
+          button.danger:hover{background:var(--red);border-color:var(--red);color:#fff}
         </style>
       </head>
       <body>

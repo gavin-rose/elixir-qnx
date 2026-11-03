@@ -131,6 +131,8 @@ defmodule Webdemo.ConsoleLive do
 
   defp log_text(log), do: Enum.map_join(log, "\n", fn {t, m} -> "#{t}  #{m}" end)
 
+  defp cal_class(cal, value), do: if(cal == value, do: "active", else: "")
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -164,23 +166,27 @@ defmodule Webdemo.ConsoleLive do
 
     <div class="panel">
       <h2>Fault lab</h2>
-      <div class="controls">
-        <div class="cgroup">
-          <div class="clabel">inject fault</div>
+      <div class="ctrl">
+        <span class="clabel">inject fault</span>
+        <span class="btns">
           <button phx-click="fault" phx-value-cmd="overheat">overheat</button>
           <button phx-click="fault" phx-value-cmd="stuck">stuck sensor</button>
           <button class="danger" phx-click="fault" phx-value-cmd="crash">crash</button>
-        </div>
-        <div class="cgroup">
-          <div class="clabel">recover</div>
+        </span>
+      </div>
+      <div class="ctrl">
+        <span class="clabel">recover</span>
+        <span class="btns">
           <button phx-click="fault" phx-value-cmd="ok">clear fault</button>
-        </div>
-        <div class="cgroup">
-          <div class="clabel">calibration (live)</div>
-          <button phx-click="calibrate" phx-value-mult="0.85">x0.85</button>
-          <button phx-click="calibrate" phx-value-mult="1.0">x1.0</button>
-          <button phx-click="calibrate" phx-value-mult="1.15">x1.15</button>
-        </div>
+        </span>
+      </div>
+      <div class="ctrl">
+        <span class="clabel">calibration (live)</span>
+        <span class="btns">
+          <button class={cal_class(@cal, 0.85)} phx-click="calibrate" phx-value-mult="0.85">x0.85</button>
+          <button class={cal_class(@cal, 1.0)} phx-click="calibrate" phx-value-mult="1.0">x1.0</button>
+          <button class={cal_class(@cal, 1.15)} phx-click="calibrate" phx-value-mult="1.15">x1.15</button>
+        </span>
       </div>
     </div>
 
