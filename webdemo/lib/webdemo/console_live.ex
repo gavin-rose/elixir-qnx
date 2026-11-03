@@ -58,7 +58,7 @@ defmodule Webdemo.ConsoleLive do
     {:noreply,
      socket
      |> assign(status: :ok, pid: pid)
-     |> log("● analyzer online: native QNX process pid #{pid}, scheduled at RT priority 20")}
+     |> log("● analyzer online: native QNX pid #{pid} @ RT priority 20")}
   end
 
   def handle_info({:status, {:down, code, pid}}, socket) do
@@ -183,9 +183,9 @@ defmodule Webdemo.ConsoleLive do
       <div class="ctrl">
         <span class="clabel">calibration (live)</span>
         <span class="btns">
-          <button class={cal_class(@cal, 0.85)} phx-click="calibrate" phx-value-mult="0.85">x0.85</button>
-          <button class={cal_class(@cal, 1.0)} phx-click="calibrate" phx-value-mult="1.0">x1.0</button>
-          <button class={cal_class(@cal, 1.15)} phx-click="calibrate" phx-value-mult="1.15">x1.15</button>
+          <span class={cal_class(@cal, 0.85)}><button phx-click="calibrate" phx-value-mult="0.85">x0.85</button></span>
+          <span class={cal_class(@cal, 1.0)}><button phx-click="calibrate" phx-value-mult="1.0">x1.0</button></span>
+          <span class={cal_class(@cal, 1.15)}><button phx-click="calibrate" phx-value-mult="1.15">x1.15</button></span>
         </span>
       </div>
     </div>

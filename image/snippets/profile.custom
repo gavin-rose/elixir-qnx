@@ -1,3 +1,2 @@
-# local/snippets/profile.custom
 # Contents are included at the end of /etc/profile
 export PATH=$PATH:/data/opt/otp/bin:/data/opt/elixir/bin

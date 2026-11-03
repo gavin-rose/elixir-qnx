@@ -1,4 +1,3 @@
-# local/snippets/data_files.custom
 # Erlang/OTP release tarball, unpacked on first boot by post_start.custom.
 # make-image.sh builds the tarballs from the release and the Elixir dir.
 [perms=644] opt.tgz=local/otp-qnx.tgz

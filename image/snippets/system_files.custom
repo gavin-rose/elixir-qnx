@@ -1,4 +1,3 @@
-# local/snippets/system_files.custom
 # QNX's stock QEMU image ships sshd and sshd-session but omits sshd-auth, which
 # sshd-session re-execs at authentication time, so sshd resets the connection
 # during key exchange. Package the binary into /system/bin alongside sshd-session.

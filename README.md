@@ -140,3 +140,36 @@ Tracked `mkqnximage` customizations copied into the build's `local/snippets/`:
 
 Open-Source Contribution & Ports (the upstream cross-compile PR), or Developer
 Tooling & Host Tools (the release packager), whichever lands strongest.
+
+## Next: aarch64 and the upstream PR
+
+Everything above runs on x86_64 under TCG. The remaining work is aarch64, which
+is both the upstream contribution and the fast path (HVF on Apple Silicon).
+
+What is already known, so this does not need rediscovering:
+
+- The entire QNX port is `erlang/otp` commit `d7e0b82`: ~170 lines over 10
+  files. It is not upstream; mainline has no QNX xcomp config at all.
+- Nine of those files are generic QNX/POSIX shims (`IOV_MAX`, `wcswidth`,
+  `SA_RESTART`, `gethostid`, `isinf`/`isnan`) and are **architecture
+  independent**, so they carry over to aarch64 unchanged.
+- The x86_64-specific parts are only: `xcomp/erl-xcomp-x86_64-qnx.conf`, the
+  hardcoded `ntox86_64-gcc`/`g++` in `erts/emulator/Makefile.in`, and the
+  `.gitignore` triples.
+
+So the aarch64 delta is small:
+
+1. Add `xcomp/erl-xcomp-aarch64-qnx.conf`: copy the x86_64 one, swap the host
+   triple to `aarch64-unknown-nto-qnx8.0.0`, the tools to `ntoaarch64-*`, and
+   the OpenSSL paths to `$QNX_TARGET/aarch64le/usr`.
+2. Generalize the hardcoded compiler name in `erts/emulator/Makefile.in` so the
+   QNX branch is multi-arch rather than x86_64 only.
+3. Build and boot with `ARCH=aarch64le` through `build-otp.sh`, `make-image.sh`,
+   and `run-qemu.sh`. `mkqnximage` supports `--arch=aarch64le`, the SDP already
+   installs the `aarch64le` target libraries, and `run-qemu.sh` already has an
+   aarch64 branch using `-accel hvf`.
+4. Offer 1 and 2 to `erlang/otp` as a PR ("make the QNX cross-compile
+   multi-arch"). The Ports category asks for the PR URL.
+
+Caveat to expect: the aarch64 QEMU machine/GIC wiring in `run-qemu.sh` is
+untested and may need tuning against what `mkqnximage` emits.

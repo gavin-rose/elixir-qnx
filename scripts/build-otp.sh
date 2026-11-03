@@ -14,7 +14,6 @@ DEST="${DEST:-/work/otp-qnx}"
 # disabled in the cross build (their wx modules otherwise fail under -Werror).
 EXTRA_CONFIGURE="${EXTRA_CONFIGURE:---without-wx --without-debugger --without-observer --without-et}"
 
-# Pull in the QNX cross toolchain: QNX_HOST, QNX_TARGET, PATH to ntox86_64-gcc, etc.
 # shellcheck disable=SC1091
 source "${QNX_BASE}/qnxsdp-env.sh"
 

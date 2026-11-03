@@ -8,14 +8,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # The QNX Software Center is an Eclipse/Java app and needs a JRE and SWT even for
 # the command-line client; xvfb covers the SWT display init in a headless build.
-# The rest bootstrap an OTP build and the cross-compile.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl git xz-utils \
       default-jre libswt-gtk-4-java xvfb \
       build-essential autoconf m4 libncurses-dev perl libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the QNX Software Center Linux installer staged in ./vendor.
 COPY vendor/qnx-setup-linux.run /tmp/qnx-setup.run
 
 # Install the Software Center non-interactively (accepts the EULA, no autostart).

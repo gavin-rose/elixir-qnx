@@ -1,6 +1,4 @@
-# local/snippets/post_start.custom
-# Unpack the cross-compiled Erlang/OTP release and the precompiled Elixir on
-# first boot, then print proof lines showing both run on QNX.
+# First boot: unpack the OTP release, Elixir, and the app, then start the console.
 if [ ! -e /data/opt/otp/.ready ]; then
     echo "QNX-OTP: unpacking Erlang/OTP release"
     mkdir -p /data/opt/otp

@@ -17,7 +17,6 @@ HTTP_PORT="${HTTP_PORT:-4000}"
 cd "$TARGET_DIR"
 [ -f output/ifs.bin ] || { echo "no output/ifs.bin in $TARGET_DIR; run make-image.sh first" >&2; exit 1; }
 
-# User-mode networking with SSH and HTTP forwards to the guest (no privileges).
 net_args=(-netdev user,id=net0,hostfwd=tcp::"${SSH_PORT}"-:22,hostfwd=tcp::"${HTTP_PORT}"-:4000)
 
 case "$ARCH" in

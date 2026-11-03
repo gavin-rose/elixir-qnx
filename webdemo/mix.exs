@@ -23,7 +23,8 @@ defmodule Webdemo.MixProject do
       {:phoenix, "~> 1.7"},
       {:phoenix_live_view, "~> 1.0"},
       {:bandit, "~> 1.5"},
-      {:jason, "~> 1.4"}
+      {:jason, "~> 1.4"},
+      {:lazy_html, ">= 0.1.0", only: :test}
     ]
   end
 end

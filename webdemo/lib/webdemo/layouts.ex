@@ -18,7 +18,7 @@ defmodule Webdemo.Layouts do
           *{box-sizing:border-box}
           body{margin:0;font:15px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;
             background:var(--bg);color:var(--txt);padding:44px 20px}
-          .wrap{max-width:720px;margin:0 auto}
+          .wrap{max-width:900px;margin:0 auto}
           h1{font-size:19px;letter-spacing:.16em;text-transform:uppercase;margin:0 0 4px;font-weight:700}
           h1 .arrow{color:var(--red);margin:0 6px}
           .sub{color:var(--mut);margin:0 0 26px;font-size:13px}
@@ -34,7 +34,9 @@ defmodule Webdemo.Layouts do
           button:hover{border-color:var(--red);color:#fff}
           button:focus{outline:none}
           button:focus-visible{outline:2px solid var(--red2);outline-offset:1px}
-          button.active{background:var(--red);border-color:var(--red);color:#fff}
+          /* Active state lives on a wrapper: LiveView's loading classes clobber
+             the class it sets on the clicked button itself. */
+          .active > button{background:var(--red);border-color:var(--red);color:#fff}
           table.kv{border-collapse:collapse;width:100%;font-size:13px;margin-top:4px}
           table.kv td{padding:5px 0;border-bottom:1px solid var(--line)}
           table.kv tr:last-child td{border-bottom:0}

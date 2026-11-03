@@ -1,4 +1,3 @@
-# local/snippets/ifs_files.custom
 # sshd-session re-execs the compiled-in absolute path /usr/libexec/sshd-auth,
 # which QNX's relocation of the helpers into /system/bin does not cover (unlike
 # SshdSessionPath and the sftp Subsystem, there is no config knob for it).
