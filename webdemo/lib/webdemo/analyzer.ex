@@ -23,6 +23,28 @@ defmodule Webdemo.Analyzer do
     :exit, _ -> {nil, [], nil}
   end
 
+  @doc "The analyzer's pid and scheduling priority as QNX's pidin reports them, or nil off QNX."
+  def sched_info do
+    with pidin when is_binary(pidin) <- System.find_executable("pidin") || boot_tool("pidin"),
+         {out, 0} <- System.cmd(pidin, ["-F", "%a %60N %p"], stderr_to_stdout: true) do
+      out
+      |> String.split("\n")
+      |> Enum.find_value(fn line ->
+        case String.split(line) do
+          [pid, name, prio] -> if String.ends_with?(name, "analyzer"), do: %{pid: pid, prio: prio}
+          _ -> nil
+        end
+      end)
+    else
+      _ -> nil
+    end
+  end
+
+  defp boot_tool(name) do
+    path = "/proc/boot/" <> name
+    if File.exists?(path), do: path
+  end
+
   @impl true
   def init(:ok) do
     # Clear any lingering fault so a restart does not immediately re-crash.
@@ -55,7 +77,8 @@ defmodule Webdemo.Analyzer do
   def handle_info(_other, state), do: {:noreply, state}
 
   @impl true
-  def handle_call(:latest, _from, state), do: {:reply, {state.last, state.history, state.os_pid}, state}
+  def handle_call(:latest, _from, state),
+    do: {:reply, {state.last, state.history, state.os_pid}, state}
 
   defp os_pid(port) do
     case Port.info(port, :os_pid) do

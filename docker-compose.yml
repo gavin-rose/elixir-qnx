@@ -11,6 +11,8 @@ services:
     working_dir: /work
     tty: true
     stdin_open: true
+    environment:
+      - ARCH
     volumes:
       # Repo root is the work dir so OTP sources and build outputs persist on the
       # host (and are gitignored). Scripts are edited on the host and run here.

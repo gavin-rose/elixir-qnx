@@ -5,7 +5,10 @@ defmodule Webdemo.ConsoleLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    if connected?(socket), do: Phoenix.PubSub.subscribe(Webdemo.PubSub, Analyzer.topic())
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(Webdemo.PubSub, Analyzer.topic())
+      send(self(), :sched)
+    end
 
     {last, history, pid} = Analyzer.latest()
 
@@ -22,6 +25,7 @@ defmodule Webdemo.ConsoleLive do
         last: last,
         history: history,
         pid: pid,
+        sched: nil,
         cal: "1.0",
         log: [{now(), "console connected"}]
       )
@@ -42,7 +46,10 @@ defmodule Webdemo.ConsoleLive do
     socket =
       cond do
         match?({:alarm, _}, status) and not match?({:alarm, _}, prev) ->
-          log(socket, "⚠ alarm raised: #{sample.status} (reading #{fmt(sample.reading)}, #{fmt(sample.temp)} C)")
+          log(
+            socket,
+            "⚠ alarm raised: #{sample.status} (reading #{fmt(sample.reading)}, #{fmt(sample.temp)} C)"
+          )
 
         status == :ok and match?({:alarm, _}, prev) ->
           log(socket, "✓ alarm cleared, readings nominal")
@@ -57,16 +64,28 @@ defmodule Webdemo.ConsoleLive do
   def handle_info({:status, {:up, pid}}, socket) do
     {:noreply,
      socket
-     |> assign(status: :ok, pid: pid)
-     |> log("● analyzer online: native QNX pid #{pid} @ RT priority 20")}
+     |> assign(status: :ok, pid: pid, sched: nil)
+     |> log("● analyzer online: native QNX process started via on -p")}
   end
 
   def handle_info({:status, {:down, code, pid}}, socket) do
     {:noreply,
      socket
-     |> assign(status: :down, pid: nil)
+     |> assign(status: :down, pid: nil, sched: nil)
      |> log("✖ analyzer pid #{pid} terminated (#{exit_desc(code)})")
      |> log("↻ OTP supervisor detected the exit, restarting the analyzer…")}
+  end
+
+  def handle_info(:sched, socket) do
+    Process.send_after(self(), :sched, 2_000)
+    sched = Analyzer.sched_info()
+
+    socket =
+      if sched && socket.assigns.sched == nil,
+        do: log(socket, "◆ QNX pidin: analyzer pid #{sched.pid}, priority #{sched.prio}"),
+        else: socket
+
+    {:noreply, assign(socket, sched: sched)}
   end
 
   def handle_info(_msg, socket), do: {:noreply, socket}
@@ -85,7 +104,9 @@ defmodule Webdemo.ConsoleLive do
   def handle_event("calibrate", %{"mult" => mult}, socket) do
     {m, _} = Float.parse(mult)
     FaultLab.calibrate(m)
-    {:noreply, socket |> assign(cal: mult) |> log("→ calibration deployed live: x#{mult} (no restart)")}
+
+    {:noreply,
+     socket |> assign(cal: mult) |> log("→ calibration deployed live: x#{mult} (no restart)")}
   end
 
   defp log(socket, msg), do: update(socket, :log, &Enum.take([{now(), msg} | &1], 12))
@@ -131,6 +152,10 @@ defmodule Webdemo.ConsoleLive do
 
   defp log_text(log), do: Enum.map_join(log, "\n", fn {t, m} -> "#{t}  #{m}" end)
 
+  defp pid_text(%{pid: pid, prio: prio}, _), do: "pidin: QNX pid #{pid} · prio #{prio}"
+  defp pid_text(nil, nil), do: "no process"
+  defp pid_text(nil, pid), do: "native QNX pid #{pid}"
+
   defp cal_class(cal, value), do: if(cal == value, do: "active", else: "")
 
   @impl true
@@ -143,7 +168,7 @@ defmodule Webdemo.ConsoleLive do
       <div class="statusrow">
         <span class={"light " <> status_class(@status)}></span>
         <span class="statustext"><%= status_text(@status) %></span>
-        <span class="pidtag"><%= if @pid, do: "native QNX pid #{@pid} · RT prio 20", else: "no process" %></span>
+        <span class="pidtag"><%= pid_text(@sched, @pid) %></span>
       </div>
       <div class="readings">
         <div class="reading">
