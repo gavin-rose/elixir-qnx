@@ -155,8 +155,9 @@ not merged upstream) and makes it multi-arch:
 
 Verified: it applies cleanly to a fresh `maint-28` clone on top of the base
 port, and the result cross-compiles to an aarch64 QNX `beam.smp` that boots and
-runs everything above. Because mainline OTP has no QNX support yet, an upstream
-PR has to carry the base port too, credited to its author.
+runs everything above. Because mainline OTP has no QNX support yet, the upstream
+PR carries the base port too, with its author's permission and credit:
+[erlang/otp#12150](https://github.com/erlang/otp/pull/12150).
 
 ## Tested on
 
