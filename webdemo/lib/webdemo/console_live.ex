@@ -22,7 +22,7 @@ defmodule Webdemo.ConsoleLive do
         last: last,
         history: history,
         pid: pid,
-        cal: 1.0,
+        cal: "1.0",
         log: [{now(), "console connected"}]
       )
 
@@ -72,9 +72,9 @@ defmodule Webdemo.ConsoleLive do
   def handle_info(_msg, socket), do: {:noreply, socket}
 
   @impl true
-  def handle_event("fault", %{"cmd" => "crash"}, socket) do
-    FaultLab.inject("crash")
-    {:noreply, log(socket, "→ operator injected fault: crash")}
+  def handle_event("fault", %{"cmd" => "ok"}, socket) do
+    FaultLab.inject("ok")
+    {:noreply, log(socket, "→ operator reset faults: ok")}
   end
 
   def handle_event("fault", %{"cmd" => cmd}, socket) do
@@ -85,7 +85,7 @@ defmodule Webdemo.ConsoleLive do
   def handle_event("calibrate", %{"mult" => mult}, socket) do
     {m, _} = Float.parse(mult)
     FaultLab.calibrate(m)
-    {:noreply, socket |> assign(cal: m) |> log("→ calibration deployed live: x#{mult} (no restart)")}
+    {:noreply, socket |> assign(cal: mult) |> log("→ calibration deployed live: x#{mult} (no restart)")}
   end
 
   defp log(socket, msg), do: update(socket, :log, &Enum.take([{now(), msg} | &1], 12))
@@ -181,11 +181,11 @@ defmodule Webdemo.ConsoleLive do
         </span>
       </div>
       <div class="ctrl">
-        <span class="clabel">calibration (live)</span>
+        <span class="clabel">calibration factor</span>
         <span class="btns">
-          <span class={cal_class(@cal, 0.85)}><button phx-click="calibrate" phx-value-mult="0.85">x0.85</button></span>
-          <span class={cal_class(@cal, 1.0)}><button phx-click="calibrate" phx-value-mult="1.0">x1.0</button></span>
-          <span class={cal_class(@cal, 1.15)}><button phx-click="calibrate" phx-value-mult="1.15">x1.15</button></span>
+          <span class={cal_class(@cal, "0.85")}><button phx-click="calibrate" phx-value-mult="0.85">x0.85</button></span>
+          <span class={cal_class(@cal, "1.0")}><button phx-click="calibrate" phx-value-mult="1.0">x1.0</button></span>
+          <span class={cal_class(@cal, "1.15")}><button phx-click="calibrate" phx-value-mult="1.15">x1.15</button></span>
         </span>
       </div>
     </div>
