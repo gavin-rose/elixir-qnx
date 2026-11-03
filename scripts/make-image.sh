@@ -3,8 +3,7 @@
 # baked into the data partition. Runs inside the toolchain container:
 #   docker compose run --rm toolchain bash scripts/make-image.sh
 #
-# Default arch is x86_64 to match the OTP build; switch to aarch64le once an
-# aarch64 OTP release exists (the faster, HVF-accelerated target).
+# ARCH is x86_64 (default) or aarch64le; aarch64le runs under HVF on Apple Silicon.
 set -euo pipefail
 
 ARCH="${ARCH:-x86_64}"
@@ -12,7 +11,8 @@ HOST="${HOST:-qnx-$ARCH}"
 USERS="${USERS:-qnxuser/qnx}"
 RAM="${RAM:-2048}"
 WORK="${WORK:-/work}"
-REL="${REL:-$WORK/otp-qnx}"
+if [ "$ARCH" = x86_64 ]; then DEFAULT_REL="$WORK/otp-qnx"; else DEFAULT_REL="$WORK/otp-qnx-$ARCH"; fi
+REL="${REL:-$DEFAULT_REL}"
 ELIXIR="${ELIXIR:-$WORK/elixir}"
 TARGET_DIR="${TARGET_DIR:-$WORK/targets/$ARCH}"
 SNIPPETS_SRC="${SNIPPETS_SRC:-$WORK/image/snippets}"
@@ -39,7 +39,7 @@ mkdir -p "$TARGET_DIR/local/webdemo-stage"
 cp -RL "$WEBDEMO_LIB" "$TARGET_DIR/local/webdemo-stage/lib"
 cp "$WORK/webdemo/start.sh" "$TARGET_DIR/local/webdemo-stage/start.sh"
 # The analyzer is the real-time task: a native QNX binary the BEAM launches via on -p.
-qcc -Vgcc_ntox86_64 -O2 -o "$TARGET_DIR/local/webdemo-stage/analyzer" "$WORK/analyzer/analyzer.c" -lm
+qcc -Vgcc_nto"$ARCH" -O2 -o "$TARGET_DIR/local/webdemo-stage/analyzer" "$WORK/analyzer/analyzer.c" -lm
 tar -C "$TARGET_DIR/local/webdemo-stage" -czf "$TARGET_DIR/local/webdemo.tgz" .
 
 # mkqnximage picks up local/snippets/*.custom when present.

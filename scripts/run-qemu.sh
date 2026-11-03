@@ -32,10 +32,10 @@ case "$ARCH" in
       -nographic -serial mon:stdio
     ;;
   aarch64le)
-    # HVF gives near-native speed on Apple Silicon; -cpu host requires it.
-    # The machine/gic wiring may need tuning against the image mkqnximage emits.
+    # QNX template config (virt, GICv2, cortex-a57) under TCG. HVF would be faster,
+    # but it only offers GICv3 and QNX's startup then asserts on a GICv2-only path.
     exec qemu-system-aarch64 \
-      -machine virt,accel=hvf,gic-version=3 -cpu host \
+      -machine virt -cpu cortex-a57 \
       -smp "$CPUS" -m "$RAM" \
       -drive file=output/disk-qemu.vmdk,if=none,id=drv0 -device virtio-blk-device,drive=drv0 \
       -kernel output/ifs.bin \

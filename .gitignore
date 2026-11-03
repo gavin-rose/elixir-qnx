@@ -4,6 +4,8 @@ vendor/*.run
 # Build outputs
 /otp/
 /otp-qnx/
+/otp-aarch64le/
+/otp-qnx-aarch64le/
 /elixir/
 /targets/
 _build/

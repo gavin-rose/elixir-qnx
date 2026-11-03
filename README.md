@@ -9,7 +9,8 @@ required.
 
 ## Status
 
-Early. The toolchain image (QNX SDP 8.0 + OTP cross-compile) is the first piece.
+Working on x86_64 and aarch64le in QEMU: Erlang/OTP 28, Elixir 1.20.5, and a
+Phoenix LiveView operations console, all running on QNX 8.0.
 
 Prior art this builds on: Jonatan Maennchen's proof of concept running Erlang/OTP
 28 on QNX 8.0 (https://erlef.org/blog/embedded/otp-qnx-port), which is an
@@ -21,8 +22,8 @@ clean upstreamable cross-compile config. That gap is the project.
 
 The QNX SDK host tools are x86_64 Linux only and are not supported on macOS or
 ARM hosts, so the toolchain lives in a `linux/amd64` container. On Apple Silicon,
-Docker Desktop runs it under Rosetta. The QNX image it produces can target
-aarch64le and then runs near-native in QEMU on an Apple Silicon host.
+Docker Desktop runs it under Rosetta. The QNX images it produces target x86_64
+or aarch64le, and both boot in QEMU on the host.
 
 ## Prerequisites
 
@@ -111,9 +112,8 @@ image, then open `http://localhost:4000`:
   telemetry resumes with no operator action.
 - Calibration updates apply live, with no restart.
 
-On Apple Silicon the x86_64 guest runs under TCG (slower); the aarch64le target
-runs under HVF near-native, and becomes the primary once an aarch64 OTP release
-is built (`ARCH=aarch64le`).
+Both targets run under QEMU's TCG emulation; see [aarch64](#aarch64) for the
+ARM build and why it does not use HVF.
 
 ### image/snippets
 
@@ -124,52 +124,50 @@ Tracked `mkqnximage` customizations copied into the build's `local/snippets/`:
 - `profile.custom` puts `erl`, `iex`, and `elixir` on `PATH`.
 - `system_files.custom` adds `sshd-auth` (QNX's stock image omits it, breaking sshd).
 
-## Roadmap
+## aarch64
 
-1. OTP 28 cross-compiled for x86_64 QNX, booted in QEMU (reproduce the PoC baseline).
-2. Elixir on QNX: ship the Elixir `ebin` dirs into the image, run `iex`.
-3. `mix release` bundling the QNX ERTS (`include_erts`/`system_libs`): the
-   "release for QNX" packaging step.
-4. A Phoenix + LiveView page served from inside QNX in QEMU (pure-Elixir deps
-   only; no NIFs).
-5. aarch64le: a new `erl-xcomp-aarch64-qnx.conf` plus generalizing the hardcoded
-   compiler name, offered as a clean PR to `erlang/otp`. Also the faster QEMU
-   target on Apple Silicon.
+Everything above also builds and runs on aarch64le (QEMU `virt`, `cortex-a57`):
 
-## Hackathon category
+```sh
+ARCH=aarch64le docker compose run --rm toolchain bash scripts/build-otp.sh
+ARCH=aarch64le docker compose run --rm toolchain bash scripts/make-image.sh
+ARCH=aarch64le ./scripts/run-qemu.sh
+```
 
-Open-Source Contribution & Ports (the upstream cross-compile PR), or Developer
-Tooling & Host Tools (the release packager), whichever lands strongest.
+- The QNX SDP baseline omits two packages an aarch64 QEMU image needs:
+  `com.qnx.qnx800.target.qemuvirt` (the board startup, `startup-qemu-virt`) and
+  `com.qnx.qnx800.target.driver.virtio.devb` (the disk driver, `devb-virtio`).
+  The Dockerfile installs both.
+- It runs under TCG rather than HVF. HVF on Apple Silicon only offers a GICv3
+  interrupt controller, and QNX's `startup-qemu-virt` in this configuration
+  takes a GICv2-only path and asserts.
 
-## Next: aarch64 and the upstream PR
+## Upstream patch
 
-Everything above runs on x86_64 under TCG. The remaining work is aarch64, which
-is both the upstream contribution and the fast path (HVF on Apple Silicon).
+`patches/otp-qnx-multiarch.patch` applies on top of Jonatan Maennchen's QNX
+port ([erlang/otp d7e0b82](https://github.com/erlang/otp/commit/d7e0b82835312a0458e276f4663bb432574a26d6),
+not merged upstream) and makes it multi-arch:
 
-What is already known, so this does not need rediscovering:
+- adds `xcomp/erl-xcomp-aarch64-qnx.conf`;
+- derives the QNX cross compiler in `erts/emulator/Makefile.in` from the target
+  triple instead of hardcoding `ntox86_64-gcc`;
+- ignores the aarch64 build directories.
 
-- The entire QNX port is `erlang/otp` commit `d7e0b82`: ~170 lines over 10
-  files. It is not upstream; mainline has no QNX xcomp config at all.
-- Nine of those files are generic QNX/POSIX shims (`IOV_MAX`, `wcswidth`,
-  `SA_RESTART`, `gethostid`, `isinf`/`isnan`) and are **architecture
-  independent**, so they carry over to aarch64 unchanged.
-- The x86_64-specific parts are only: `xcomp/erl-xcomp-x86_64-qnx.conf`, the
-  hardcoded `ntox86_64-gcc`/`g++` in `erts/emulator/Makefile.in`, and the
-  `.gitignore` triples.
+Verified: it applies cleanly to a fresh `maint-28` clone on top of the base
+port, and the result cross-compiles to an aarch64 QNX `beam.smp` that boots and
+runs everything above. Because mainline OTP has no QNX support yet, an upstream
+PR has to carry the base port too, credited to its author.
 
-So the aarch64 delta is small:
+## Tested on
 
-1. Add `xcomp/erl-xcomp-aarch64-qnx.conf`: copy the x86_64 one, swap the host
-   triple to `aarch64-unknown-nto-qnx8.0.0`, the tools to `ntoaarch64-*`, and
-   the OpenSSL paths to `$QNX_TARGET/aarch64le/usr`.
-2. Generalize the hardcoded compiler name in `erts/emulator/Makefile.in` so the
-   QNX branch is multi-arch rather than x86_64 only.
-3. Build and boot with `ARCH=aarch64le` through `build-otp.sh`, `make-image.sh`,
-   and `run-qemu.sh`. `mkqnximage` supports `--arch=aarch64le`, the SDP already
-   installs the `aarch64le` target libraries, and `run-qemu.sh` already has an
-   aarch64 branch using `-accel hvf`.
-4. Offer 1 and 2 to `erlang/otp` as a PR ("make the QNX cross-compile
-   multi-arch"). The Ports category asks for the PR URL.
+- QNX SDP 8.0 (QNX Everywhere, non-commercial), QNX Software Center 2.0.4
+- QEMU 11.1 on macOS (Apple Silicon); x86_64 and aarch64le guests
+- `qcc`, `ntox86_64-gcc` and `ntoaarch64-gcc` 12.2.0, in a `linux/amd64` Docker
+  container under Rosetta
+- Erlang/OTP 28 (`maint-28`, erts 16.4.0.7) and Elixir 1.20.5
 
-Caveat to expect: the aarch64 QEMU machine/GIC wiring in `run-qemu.sh` is
-untested and may need tuning against what `mkqnximage` emits.
+## Not done
+
+- `mix release` bundling the QNX ERTS: the app runs from host-compiled beams on
+  the guest's Elixir instead.
+- HVF acceleration for aarch64 (see above).

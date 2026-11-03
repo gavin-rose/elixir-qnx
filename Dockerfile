@@ -35,6 +35,17 @@ RUN --mount=type=secret,id=myqnx_user \
     xvfb-run -a ./qnxsoftwarecenter_clt -myqnx.user "$U" -myqnx.password "$P" \
       -cleanInstall -mirrorBaseline qnx800 -installBaseline com.qnx.qnx800 -destination /opt/qnx800
 
+# The base SDP install omits what an aarch64 QEMU image needs: the board startup
+# (startup-qemu-virt) and the virtio block driver (devb-virtio) for its disk.
+RUN --mount=type=secret,id=myqnx_user \
+    --mount=type=secret,id=myqnx_password \
+    set -eu; \
+    U="$(cat /run/secrets/myqnx_user)"; \
+    P="$(cat /run/secrets/myqnx_password)"; \
+    cd /opt/qnxinstall/qnxsoftwarecenter; \
+    xvfb-run -a ./qnxsoftwarecenter_clt -myqnx.user "$U" -myqnx.password "$P" \
+      -destination /opt/qnx800 -installPackage com.qnx.qnx800.target.qemuvirt,com.qnx.qnx800.target.driver.virtio.devb
+
 ENV QNX_BASE=/opt/qnx800
 WORKDIR /work
 COPY scripts/ /work/scripts/
