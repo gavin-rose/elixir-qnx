@@ -1,8 +1,8 @@
 diff --git a/.gitignore b/.gitignore
-index 03a3a60..2a49321 100644
+index 38138d5cf..1b2ae6bdb 100644
 --- a/.gitignore
 +++ b/.gitignore
-@@ -55,6 +55,8 @@ powerpc-unknown-linux-gnu
+@@ -57,6 +57,8 @@ powerpc-unknown-linux-gnu
  aarch64-unknown-linux-gnu
  x86_64-unknown-nto-qnx
  x86_64-unknown-nto-qnx[0-9]*.[0-9]*.[0-9]*
@@ -12,10 +12,10 @@ index 03a3a60..2a49321 100644
  # Mac OS X
  a.out.dSYM/
 diff --git a/erts/emulator/Makefile.in b/erts/emulator/Makefile.in
-index 75f1ec3..a1f821e 100644
+index a30ea98c8..e96a7f5e9 100644
 --- a/erts/emulator/Makefile.in
 +++ b/erts/emulator/Makefile.in
-@@ -1463,8 +1463,9 @@ endif
+@@ -1477,8 +1477,9 @@ endif
  
  # QNX's qcc tries to link when using -MM, use the underlying gcc instead
  ifeq ($(findstring nto-qnx,$(TARGET)),nto-qnx)
@@ -29,15 +29,18 @@ index 75f1ec3..a1f821e 100644
  DEP_CXX=$(CXX)
 diff --git a/xcomp/erl-xcomp-aarch64-qnx.conf b/xcomp/erl-xcomp-aarch64-qnx.conf
 new file mode 100644
-index 0000000..2999060
+index 000000000..0827b5c6a
 --- /dev/null
 +++ b/xcomp/erl-xcomp-aarch64-qnx.conf
-@@ -0,0 +1,108 @@
+@@ -0,0 +1,111 @@
 +## -*-shell-script-*-
 +##
 +## %CopyrightBegin%
 +##
-+## Copyright Ericsson AB 2024. All Rights Reserved.
++## SPDX-License-Identifier: Apache-2.0
++##
++## Copyright 2025 Jonatan Männchen <jonatan@maennchen.ch>
++## Copyright 2026 Gavin Rose <gavin.rose@debugr.net>
 +##
 +## Licensed under the Apache License, Version 2.0 (the "License");
 +## you may not use this file except in compliance with the License.

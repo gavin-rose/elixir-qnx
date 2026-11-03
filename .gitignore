@@ -16,3 +16,4 @@ output/
 *.vmdk
 
 .DS_Store
+/upstream/
