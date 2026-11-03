@@ -81,34 +81,36 @@ defmodule Webdemo.CounterLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <h1>Phoenix LiveView on QNX</h1>
-    <div class="card">
-      <p>
-        Served by <b>Bandit</b> + <b>Phoenix LiveView</b> on the <b>BEAM</b>,
-        running on <b>QNX 8.0</b>, pushed live over a websocket to your browser.
-      </p>
-      <p class="big"><%= @count %></p>
-      <p>seconds since this LiveView mounted (server push, no reloads)</p>
-      <button phx-click="inc">+1 from a click</button>
-      <table>
-        <tr><td class="k">system_architecture</td><td class="v"><%= @arch %></td></tr>
-        <tr><td class="k">os:type</td><td class="v"><%= @os %></td></tr>
-        <tr><td class="k">otp_release</td><td class="v"><%= @otp %></td></tr>
-        <tr><td class="k">elixir</td><td class="v"><%= @elixir %></td></tr>
-      </table>
+    <h1>Elixir <span class="arrow">→</span> QNX</h1>
+    <p class="sub">Phoenix LiveView on the BEAM, running on the QNX 8.0 real-time OS</p>
 
-      <h2 style="font-size:15px;margin-top:24px">QNX real-time scheduler, driven from Elixir</h2>
-      <p>
+    <div class="panel">
+      <h2>Live over the websocket</h2>
+      <div class="count"><%= @count %></div>
+      <p class="count-label">seconds since this view mounted, server-pushed, no reloads</p>
+      <button class="primary" phx-click="inc">+1 from a click</button>
+      <table class="kv">
+        <tr><td>system_architecture</td><td><%= @arch %></td></tr>
+        <tr><td>os:type</td><td><%= @os %></td></tr>
+        <tr><td>otp_release</td><td><%= @otp %></td></tr>
+        <tr><td>elixir</td><td><%= @elixir %></td></tr>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>QNX real-time scheduler, driven from Elixir</h2>
+      <div class="row">
+        <span class="lab">inspect</span>
         <button phx-click="diag" phx-value-cmd="sysinfo">pidin info</button>
         <button phx-click="diag" phx-value-cmd="procs">live threads</button>
         <button phx-click="diag" phx-value-cmd="uname">uname</button>
-      </p>
-      <p>
-        spawn a real-time task:
+      </div>
+      <div class="row">
+        <span class="lab">spawn a real-time task</span>
         <button :for={p <- @prios} phx-click="spawn" phx-value-prio={p}>priority <%= p %></button>
-      </p>
-      <p :if={@diag_cmd == "procs"} style="color:#7ee081">● live, refreshing each second over the websocket</p>
-      <pre style="background:#0b0d12;border:1px solid #262b33;border-radius:8px;padding:12px;overflow:auto;max-height:360px;color:#cfe3c0"><%= @diag %></pre>
+      </div>
+      <p :if={@diag_cmd == "procs"} class="live"><span class="dot"></span>live, refreshing each second</p>
+      <pre><%= @diag %></pre>
     </div>
     """
   end

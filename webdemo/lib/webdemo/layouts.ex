@@ -11,17 +11,46 @@ defmodule Webdemo.Layouts do
         <meta name="csrf-token" content={Plug.CSRFProtection.get_csrf_token()} />
         <title>Elixir on QNX</title>
         <style>
-          body{font:16px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;background:#0f1115;color:#d6dae0;margin:0;padding:48px}
-          h1{font-size:22px;letter-spacing:.03em}
-          .card{max-width:680px;border:1px solid #262b33;border-radius:10px;padding:20px 24px;background:#161a21}
-          .k{color:#8a91a0}.v{color:#fbbf24}
-          button{font:inherit;background:#3b82f6;color:#fff;border:0;border-radius:6px;padding:6px 14px;cursor:pointer}
-          .big{font-size:44px;color:#fbbf24;margin:6px 0}
-          table{border-collapse:collapse;margin-top:14px}td{padding:2px 12px 2px 0}
+          :root{
+            --bg:#0a0a0b; --panel:#141416; --line:#2a2024; --txt:#e8e6e6;
+            --mut:#86868c; --red:#e5342b; --red2:#ff5a4d;
+          }
+          *{box-sizing:border-box}
+          body{margin:0;font:15px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;
+            background:var(--bg);color:var(--txt);padding:44px 20px}
+          .wrap{max-width:720px;margin:0 auto}
+          h1{font-size:19px;letter-spacing:.16em;text-transform:uppercase;margin:0 0 4px;font-weight:700}
+          h1 .arrow{color:var(--red);margin:0 6px}
+          .sub{color:var(--mut);margin:0 0 26px;font-size:13px}
+          .panel{border:1px solid var(--line);border-radius:12px;background:var(--panel);
+            padding:20px 22px;margin-bottom:18px}
+          .panel h2{font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+            color:var(--red);margin:0 0 16px;font-weight:700}
+          .count{font-size:54px;font-weight:700;color:var(--red);line-height:1;margin:0}
+          .count-label{color:var(--mut);font-size:12px;margin:4px 0 16px}
+          button{font:inherit;font-size:13px;background:transparent;color:var(--txt);
+            border:1px solid var(--red);border-radius:7px;padding:6px 13px;cursor:pointer;
+            transition:background .12s,color .12s;margin:0 7px 7px 0}
+          button:hover{background:var(--red);color:#fff}
+          button.primary{background:var(--red);color:#fff}
+          button.primary:hover{background:var(--red2)}
+          table.kv{border-collapse:collapse;width:100%;font-size:13px;margin-top:4px}
+          table.kv td{padding:5px 0;border-bottom:1px solid var(--line)}
+          table.kv tr:last-child td{border-bottom:0}
+          table.kv td:first-child{color:var(--mut)}
+          table.kv td:last-child{color:var(--txt);text-align:right}
+          .row{margin:0 0 10px}
+          .row .lab{color:var(--mut);font-size:12px;margin-right:8px;display:inline-block;min-width:150px}
+          .live{color:var(--red);font-size:12px;margin:12px 0 8px;display:flex;align-items:center}
+          .live .dot{width:8px;height:8px;border-radius:50%;background:var(--red);
+            margin-right:8px;animation:pulse 1s infinite}
+          @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+          pre{background:#000;border:1px solid var(--line);border-radius:8px;padding:14px;
+            overflow:auto;max-height:360px;color:#d7d7d7;font-size:12.5px;line-height:1.45;margin:0}
         </style>
       </head>
       <body>
-        <%= @inner_content %>
+        <div class="wrap"><%= @inner_content %></div>
         <script src="/js/phoenix/phoenix.min.js"></script>
         <script src="/js/lv/phoenix_live_view.min.js"></script>
         <script>
