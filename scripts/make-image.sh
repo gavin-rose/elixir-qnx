@@ -3,7 +3,7 @@
 # baked into the data partition. Runs inside the toolchain container:
 #   docker compose run --rm toolchain bash scripts/make-image.sh
 #
-# ARCH is x86_64 (default) or aarch64le; aarch64le runs under HVF on Apple Silicon.
+# ARCH is x86_64 (default) or aarch64le; both run under TCG in QEMU.
 set -euo pipefail
 
 ARCH="${ARCH:-x86_64}"

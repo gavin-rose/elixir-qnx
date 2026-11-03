@@ -2,9 +2,8 @@
 # Boot a QNX image built by make-image.sh, on the macOS host via QEMU.
 #
 # The args mirror QNX's own runimage template (boot via -kernel output/ifs.bin),
-# with two macOS adjustments: user-mode networking plus an SSH port-forward,
-# because the template's bridge networking is unsupported on Darwin; and HVF
-# acceleration for the aarch64 target on Apple Silicon.
+# with one macOS adjustment: user-mode networking with ssh and http forwarded on
+# localhost, because the template's bridge networking is unsupported on Darwin.
 set -euo pipefail
 
 ARCH="${ARCH:-x86_64}"
@@ -17,12 +16,11 @@ HTTP_PORT="${HTTP_PORT:-4000}"
 cd "$TARGET_DIR"
 [ -f output/ifs.bin ] || { echo "no output/ifs.bin in $TARGET_DIR; run make-image.sh first" >&2; exit 1; }
 
-net_args=(-netdev user,id=net0,hostfwd=tcp::"${SSH_PORT}"-:22,hostfwd=tcp::"${HTTP_PORT}"-:4000)
+net_args=(-netdev user,id=net0,hostfwd=tcp:127.0.0.1:"${SSH_PORT}"-:22,hostfwd=tcp:127.0.0.1:"${HTTP_PORT}"-:4000)
 
 case "$ARCH" in
   x86_64)
-    # No HVF for an x86 guest on an ARM host, so QEMU uses TCG (slower). Fine for
-    # a first boot; the aarch64 target below is the fast one.
+    # No HVF for an x86 guest on an ARM host, so QEMU uses TCG.
     exec qemu-system-x86_64 \
       -smp "$CPUS" -cpu max -m "$RAM" \
       -drive file=output/disk-qemu.vmdk,if=ide,id=drv0 \
