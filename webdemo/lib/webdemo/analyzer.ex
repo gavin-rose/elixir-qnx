@@ -16,11 +16,11 @@ defmodule Webdemo.Analyzer do
 
   def start_link(_opts), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
-  @doc "Current sample and recent history, for a fresh page load."
+  @doc "Current sample, recent history, and native OS pid, for a fresh page load."
   def latest do
     GenServer.call(__MODULE__, :latest)
   catch
-    :exit, _ -> {nil, []}
+    :exit, _ -> {nil, [], nil}
   end
 
   @impl true
@@ -28,8 +28,9 @@ defmodule Webdemo.Analyzer do
     # Clear any lingering fault so a restart does not immediately re-crash.
     FaultLab.reset()
     port = open_port()
-    broadcast({:status, :up})
-    {:ok, %{port: port, last: nil, history: []}}
+    os_pid = os_pid(port)
+    broadcast({:status, {:up, os_pid}})
+    {:ok, %{port: port, os_pid: os_pid, last: nil, history: []}}
   end
 
   @impl true
@@ -47,14 +48,21 @@ defmodule Webdemo.Analyzer do
 
   def handle_info({port, {:exit_status, code}}, %{port: port} = state) do
     Logger.warning("analyzer exited (#{code})")
-    broadcast({:status, {:down, code}})
+    broadcast({:status, {:down, code, state.os_pid}})
     {:stop, {:analyzer_exit, code}, state}
   end
 
   def handle_info(_other, state), do: {:noreply, state}
 
   @impl true
-  def handle_call(:latest, _from, state), do: {:reply, {state.last, state.history}, state}
+  def handle_call(:latest, _from, state), do: {:reply, {state.last, state.history, state.os_pid}, state}
+
+  defp os_pid(port) do
+    case Port.info(port, :os_pid) do
+      {:os_pid, pid} -> pid
+      _ -> nil
+    end
+  end
 
   defp open_port do
     bin = System.get_env("ANALYZER_BIN", "/data/opt/webdemo/analyzer")

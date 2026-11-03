@@ -7,7 +7,7 @@ defmodule Webdemo.ConsoleLive do
   def mount(_params, _session, socket) do
     if connected?(socket), do: Phoenix.PubSub.subscribe(Webdemo.PubSub, Analyzer.topic())
 
-    {last, history} = Analyzer.latest()
+    {last, history, pid} = Analyzer.latest()
 
     status =
       cond do
@@ -21,6 +21,7 @@ defmodule Webdemo.ConsoleLive do
         status: status,
         last: last,
         history: history,
+        pid: pid,
         cal: 1.0,
         log: [{now(), "console connected"}]
       )
@@ -30,40 +31,72 @@ defmodule Webdemo.ConsoleLive do
 
   @impl true
   def handle_info({:telemetry, sample}, socket) do
+    prev = socket.assigns.status
     status = if sample.status == "ok", do: :ok, else: {:alarm, sample.status}
 
+    socket =
+      socket
+      |> assign(last: sample, status: status)
+      |> update(:history, &Enum.take([sample | &1], 90))
+
+    socket =
+      cond do
+        match?({:alarm, _}, status) and not match?({:alarm, _}, prev) ->
+          log(socket, "⚠ alarm raised: #{sample.status} (reading #{fmt(sample.reading)}, #{fmt(sample.temp)} C)")
+
+        status == :ok and match?({:alarm, _}, prev) ->
+          log(socket, "✓ alarm cleared, readings nominal")
+
+        true ->
+          socket
+      end
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:status, {:up, pid}}, socket) do
     {:noreply,
      socket
-     |> assign(last: sample, status: status)
-     |> update(:history, &Enum.take([sample | &1], 90))}
+     |> assign(status: :ok, pid: pid)
+     |> log("● analyzer online: native QNX process pid #{pid}, scheduled at RT priority 20")}
   end
 
-  def handle_info({:status, :up}, socket) do
-    {:noreply, socket |> assign(status: :ok) |> log("analyzer up (native QNX process, RT priority)")}
-  end
-
-  def handle_info({:status, {:down, code}}, socket) do
-    {:noreply, socket |> assign(status: :down) |> log("analyzer DOWN (exit #{code}); OTP supervisor restarting")}
+  def handle_info({:status, {:down, code, pid}}, socket) do
+    {:noreply,
+     socket
+     |> assign(status: :down, pid: nil)
+     |> log("✖ analyzer pid #{pid} terminated (#{exit_desc(code)})")
+     |> log("↻ OTP supervisor detected the exit, restarting the analyzer…")}
   end
 
   def handle_info(_msg, socket), do: {:noreply, socket}
 
   @impl true
+  def handle_event("fault", %{"cmd" => "crash"}, socket) do
+    FaultLab.inject("crash")
+    {:noreply, log(socket, "→ operator injected fault: crash")}
+  end
+
   def handle_event("fault", %{"cmd" => cmd}, socket) do
     FaultLab.inject(cmd)
-    {:noreply, log(socket, "fault injected: #{cmd}")}
+    {:noreply, log(socket, "→ operator injected fault: #{cmd}")}
   end
 
   def handle_event("calibrate", %{"mult" => mult}, socket) do
     {m, _} = Float.parse(mult)
     FaultLab.calibrate(m)
-    {:noreply, socket |> assign(cal: m) |> log("calibration deployed: x#{mult} (live, no restart)")}
+    {:noreply, socket |> assign(cal: m) |> log("→ calibration deployed live: x#{mult} (no restart)")}
   end
 
-  defp log(socket, msg), do: update(socket, :log, &Enum.take([{now(), msg} | &1], 8))
+  defp log(socket, msg), do: update(socket, :log, &Enum.take([{now(), msg} | &1], 12))
   defp now, do: Calendar.strftime(DateTime.utc_now(), "%H:%M:%S")
+  defp fmt(n), do: :erlang.float_to_binary(n, decimals: 1)
 
-  # Build an SVG polyline of the recent readings (history is newest-first).
+  defp exit_desc(134), do: "SIGABRT, aborted"
+  defp exit_desc(139), do: "SIGSEGV, segfault"
+  defp exit_desc(code) when code > 128, do: "signal #{code - 128}"
+  defp exit_desc(code), do: "exit #{code}"
+
   defp spark_points(history) do
     pts = Enum.reverse(history)
     n = length(pts)
@@ -93,7 +126,6 @@ defmodule Webdemo.ConsoleLive do
   defp status_text({:alarm, s}), do: "alarm: #{s}"
 
   defp status_class(:ok), do: "ok"
-  defp status_class(:down), do: "down"
   defp status_class({:alarm, _}), do: "alarm"
   defp status_class(_), do: "down"
 
@@ -106,22 +138,22 @@ defmodule Webdemo.ConsoleLive do
     <p class="sub">A simulated analyzer running on QNX 8.0, supervised by Erlang/OTP, operated over Phoenix LiveView</p>
 
     <div class="panel">
-      <h2>Analyzer</h2>
       <div class="statusrow">
         <span class={"light " <> status_class(@status)}></span>
         <span class="statustext"><%= status_text(@status) %></span>
+        <span class="pidtag"><%= if @pid, do: "native QNX pid #{@pid} · RT prio 20", else: "no process" %></span>
       </div>
       <div class="readings">
         <div class="reading">
-          <div class="rv"><%= if @last, do: :erlang.float_to_binary(@last.reading, decimals: 1), else: "--" %></div>
+          <div class="rv"><%= if @last, do: fmt(@last.reading), else: "--" %></div>
           <div class="rl">reading</div>
         </div>
         <div class="reading">
-          <div class="rv"><%= if @last, do: :erlang.float_to_binary(@last.temp, decimals: 1), else: "--" %><span class="u">°C</span></div>
+          <div class="rv"><%= if @last, do: fmt(@last.temp), else: "--" %><span class="u">°C</span></div>
           <div class="rl">temperature</div>
         </div>
         <div class="reading">
-          <div class="rv"><%= if @last, do: :erlang.float_to_binary(@last.pressure, decimals: 1), else: "--" %><span class="u">kPa</span></div>
+          <div class="rv"><%= if @last, do: fmt(@last.pressure), else: "--" %><span class="u">kPa</span></div>
           <div class="rl">pressure</div>
         </div>
       </div>
@@ -132,18 +164,23 @@ defmodule Webdemo.ConsoleLive do
 
     <div class="panel">
       <h2>Fault lab</h2>
-      <div class="row">
-        <span class="lab">inject</span>
-        <button phx-click="fault" phx-value-cmd="overheat">overheat</button>
-        <button phx-click="fault" phx-value-cmd="stuck">stuck sensor</button>
-        <button class="primary" phx-click="fault" phx-value-cmd="crash">crash (watch OTP recover)</button>
-        <button phx-click="fault" phx-value-cmd="ok">clear</button>
-      </div>
-      <div class="row">
-        <span class="lab">calibration update</span>
-        <button phx-click="calibrate" phx-value-mult="1.0">x1.0</button>
-        <button phx-click="calibrate" phx-value-mult="1.15">x1.15</button>
-        <button phx-click="calibrate" phx-value-mult="0.85">x0.85</button>
+      <div class="controls">
+        <div class="cgroup">
+          <div class="clabel">inject fault</div>
+          <button phx-click="fault" phx-value-cmd="overheat">overheat</button>
+          <button phx-click="fault" phx-value-cmd="stuck">stuck sensor</button>
+          <button class="danger" phx-click="fault" phx-value-cmd="crash">crash</button>
+        </div>
+        <div class="cgroup">
+          <div class="clabel">recover</div>
+          <button phx-click="fault" phx-value-cmd="ok">clear fault</button>
+        </div>
+        <div class="cgroup">
+          <div class="clabel">calibration (live)</div>
+          <button phx-click="calibrate" phx-value-mult="0.85">x0.85</button>
+          <button phx-click="calibrate" phx-value-mult="1.0">x1.0</button>
+          <button phx-click="calibrate" phx-value-mult="1.15">x1.15</button>
+        </div>
       </div>
     </div>
 

@@ -58,6 +58,13 @@ defmodule Webdemo.Layouts do
           .reading .rv .u{font-size:14px;color:var(--mut);margin-left:3px}
           .reading .rl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
           .spark{width:100%;height:120px;display:block;background:#000;border:1px solid var(--line);border-radius:8px}
+          .pidtag{margin-left:auto;color:var(--mut);font-size:11px;letter-spacing:.06em}
+          .controls{display:flex;flex-wrap:wrap;gap:28px}
+          .cgroup{display:flex;flex-direction:column;align-items:flex-start}
+          .cgroup .clabel{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:9px}
+          .cgroup button{margin:0 7px 0 0}
+          button.danger{border-color:var(--red);color:var(--red2)}
+          button.danger:hover{background:var(--red);color:#fff}
         </style>
       </head>
       <body>
